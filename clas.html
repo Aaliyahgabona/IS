@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 5px;
+            width: 300px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 0;
+        }
+
+        .field {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: blue;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>Register</h2>
+        <form>
+            <div class="field">
+                <label for="name">Full Name</label>
+                <input type="text" id="name">
+                <p id = "nameMesage"></p>
+            </div>
+
+            <div class="field">
+                <label for="email">Email</label>
+                <input type="email" id="email">
+                <p id ="emailMesage"></p>
+            </div>
+
+            <div class="field">
+                <label for="phone">Phone</label>
+                <input type="tel" id="phone" >
+                <p id ="phoneMesage"></p>
+            </div>
+
+            <div class="field">
+                <label for="pass1">Password</label>
+                <input type="password" id="pass1">
+                <p id ="pass1Mesage"></p>
+            </div>
+
+            <div class="field">
+                <label for="pass2">Confirm Password</label>
+                <input type="password" id="pass2" >
+                <p id ="pass2Mesage"></p>
+            </div>
+
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+    <script>
+        let form = document.querySelector("form");
+        let name= document.getElementById("name");
+        let email = document.getElementById("email");
+        let phone = document.getElementById("phone");
+        let pass1 = document.getElementById("pass1");
+        let pass2 = document.getElementById("pass2");
+
+        let nameMesage = document.getElementById("nameMesage");
+        let emailMesage = document.getElementById("emailMesage");   
+        let phoneMesage = document.getElementById("phoneMesage");
+        let pass1Mesage = document.getElementById("pass1Mesage");
+        let pass2Mesage = document.getElementById("pass2Mesage");
+       
+
+     form.addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        if (name.value === "") {
+            nameMesage.textContent = "Name is required.";
+            nameMesage.classList.add ("error");
+        } 
+        else {
+            nameMesage.textContent = "";
+            nameMesage.classList.add ("error");
+        }
+
+        if (email.value === "") {
+            emailMesage.textContent = "Email is required.";
+            emailMesage.classList.add ("error");
+        }
+         else {
+            emailMesage.textContent = "";
+            emailMesage.classList.add ("error");
+        }
+        if (phone.value === "") {
+            phoneMesage.textContent = "Phone is required.";
+            phoneMesage.classList.add ("error");
+        } 
+        else {
+            phoneMesage.textContent = "";
+            phoneMesage.classList.add ("error");
+        }
+        if (pass1.value !== pass2.value) {
+            pass2Mesage.textContent = "Passwords do not match.";
+            pass2Mesage.classList.add ("error");
+           pass2Mesage.style.color = "red";
+        } 
+        else {
+            pass1Mesage.textContent = "";
+            pass1Mesage.classList.add ("error");
+        }
+
+     });
+
+       
+      
+    </script>
+
+</body>
+</html>

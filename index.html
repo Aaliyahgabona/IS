@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RSTS — Regional School Transport System</title>
+<link rel="stylesheet" href="is.css">
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div class="auth" id="auth">
+  <div class="auth-brand">
+    <div class="mark">Regional School Transport System</div>
+    <div>
+      <h1>Safe journeys,<br>tracked end to end.</h1>
+      <p>One platform connecting students, guardians, drivers, schools and transport authorities — from check-in to verified handover.</p>
+      <div class="stats">
+        <div class="s"><div class="n">240+</div><div class="l">Schools</div></div>
+        <div class="s"><div class="n">1,850</div><div class="l">Buses</div></div>
+        <div class="s"><div class="n">62k</div><div class="l">Students</div></div>
+      </div>
+    </div>
+    <div class="foot">Strathmore University · Diploma in Business Information Technology · 2026</div>
+  </div>
+  <div class="auth-form">
+    <h2>Sign in</h2>
+    <div class="lede">Select your role to continue to the platform.</div>
+    <div class="role-select" id="roleSelect">
+      <button class="role-btn on" data-role="student"><div class="rt">Student</div><div class="rd">Check in & view bus</div></button>
+      <button class="role-btn" data-role="guardian"><div class="rt">Guardian</div><div class="rd">Track & authorise</div></button>
+      <button class="role-btn" data-role="driver"><div class="rt">Driver</div><div class="rd">Trips & incidents</div></button>
+      <button class="role-btn" data-role="admin"><div class="rt">School Admin</div><div class="rd">Manage school</div></button>
+      <button class="role-btn" data-role="sysadmin" style="grid-column:1/-1"><div class="rt">System Administrator</div><div class="rd">National oversight — all schools, buses & routes</div></button>
+    </div>
+    <div class="fg"><label>User ID</label><input id="uid" placeholder="Enter your ID" value="demo-user"></div>
+    <div class="fg"><label>Password</label><input type="password" placeholder="••••••••" value="demo1234"></div>
+    <button class="btn block" onclick="enter()">Sign in</button>
+    <div class="mini-note" style="text-align:center;margin-top:14px">Protected by role-based access control · Only verified users can sign in.</div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="app" id="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">R</div><div><div class="bt">RSTS</div><div class="bs" id="side-role">PLATFORM</div></div></div>
+    <div id="nav"></div>
+    <div class="who">
+      <div class="pfp" id="who-i">U</div>
+      <div><div class="wn" id="who-n">User</div><div class="wr" id="who-r">Role</div></div>
+      <div class="out" onclick="signout()" title="Sign out">⏻</div>
+    </div>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <div><h1 id="tb-title">Overview</h1></div>
+      <div class="sp"></div>
+      <input class="search" placeholder="Search…">
+      <button class="ic-btn" onclick="toast('No new alerts')">🔔<span class="dot"></span></button>
+    </div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============ DATA ============ */
+const NAV = {
+  student:[['overview','Home'],['tracking','Live tracking'],['alerts','Notifications']],
+  guardian:[['overview','Home'],['tracking','Live tracking'],['pickup','Authorise pickup'],['alerts','Notifications']],
+  driver:[['overview','Home'],['manifest','Trip manifest'],['tracking','Route'],['alerts','Notifications']],
+  admin:[['overview','Overview'],['students','Students'],['routes','Routes & buses'],['reports','Reports']],
+  sysadmin:[['overview','National overview'],['schools','Schools'],['fleet','Fleet'],['reports','Reports']],
+};
+const ROLE_LABEL={student:'Student',guardian:'Guardian',driver:'Driver',admin:'School Admin',sysadmin:'System Administrator'};
+const WHO={student:{n:'Alex Mwangi',r:'Greenview High',i:'A'},guardian:{n:'Mary Njoroge',r:'Guardian',i:'M'},driver:{n:'John Otieno',r:'Bus 12A',i:'J'},admin:{n:'S. Kamau',r:'Greenview High',i:'S'},sysadmin:{n:'National Ops',r:'System Administrator',i:'N'}};
+
+let role='student', page='overview';
+
+/* ============ LOGIN ============ */
+document.getElementById('roleSelect').addEventListener('click',e=>{
+  const b=e.target.closest('.role-btn'); if(!b)return;
+  document.querySelectorAll('.role-btn').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); role=b.dataset.role;
+});
+function enter(){
+  document.getElementById('auth').style.display='none';
+  document.getElementById('app').classList.add('active');
+  document.getElementById('side-role').textContent=(role==='sysadmin'?'NATIONAL':role==='admin'?'SCHOOL':'MOBILE')+' ACCESS';
+  const w=WHO[role];
+  document.getElementById('who-n').textContent=w.n;
+  document.getElementById('who-r').textContent=ROLE_LABEL[role];
+  document.getElementById('who-i').textContent=w.i;
+  buildNav(); page=NAV[role][0][0]; render();
+}
+function signout(){location.reload();}
+
+function buildNav(){
+  const nav=document.getElementById('nav');
+  const grp = role==='sysadmin'?'National':role==='admin'?'School':'Menu';
+  nav.innerHTML='<div class="grp">'+grp+'</div>'+NAV[role].map(([id,lbl])=>
+    `<div class="nav-i${id===page?' on':''}" onclick="go('${id}')"><span class="ni">${icon(id)}</span>${lbl}</div>`
+  ).join('');
+}
+function go(p){page=p;buildNav();render();}
+function icon(id){return {overview:'▦',tracking:'◎',pickup:'⚿',alerts:'◔',manifest:'▤',students:'◍',routes:'⛗',reports:'▧',schools:'⌂',fleet:'⛘'}[id]||'•';}
+
+/* ============ RENDER ============ */
+function render(){
+  const c=document.getElementById('content');
+  const fn = (PAGES[role] && PAGES[role][page]) || PAGES.common[page];
+  document.getElementById('tb-title').textContent = NAV[role].find(n=>n[0]===page)[1];
+  c.innerHTML = `<div class="page on">${fn?fn():'<p>Coming soon.</p>'}</div>`;
+  if(page==='tracking') initMap();
+}
+
+/* helpers */
+const kpi=(l,n,t,cls)=>`<div class="kpi"><div class="kl">${l}</div><div class="kn">${n}</div><div class="kt ${cls}">${t}</div></div>`;
+const head=(h,p)=>`<div class="page-head"><h2>${h}</h2>${p?`<p>${p}</p>`:''}</div>`;
+
+/* ============ PAGES ============ */
+const PAGES = {
+ common:{
+  tracking:()=>head('Live tracking','Real-time position of Bus 12A on the West Route.')+`
+    <div class="panel"><div class="mapview" id="mapview"></div></div>
+    <div class="split">
+      <div class="panel"><div class="panel-h"><h3>Trip status</h3><div class="sp"></div><span class="tag ok"><span class="dot-i ok"></span>On route</span></div>
+        <div class="panel-b">
+          <div class="field-row"><span class="k">Bus</span><span class="v">12A — West Route</span></div>
+          <div class="field-row"><span class="k">Next stop</span><span class="v" id="m-next">Oak Street</span></div>
+          <div class="field-row"><span class="k">Distance</span><span class="v" id="m-dist">1.2 km</span></div>
+          <div class="field-row"><span class="k">Estimated arrival</span><span class="v" id="m-eta">07:18 AM</span></div>
+        </div></div>
+      <div class="panel"><div class="panel-h"><h3>Route stops</h3></div>
+        <div class="panel-b">
+          <div class="lrow"><div class="lm" style="background:var(--ok-soft);color:var(--ok)">✓</div><div><div class="lt">Greenview Stop</div><div class="ld">Departed 07:15</div></div></div>
+          <div class="lrow"><div class="lm">2</div><div><div class="lt">Oak Street</div><div class="ld">Approaching</div></div></div>
+          <div class="lrow"><div class="lm">3</div><div><div class="lt">Riverside</div><div class="ld">Pending</div></div></div>
+          <div class="lrow"><div class="lm" style="background:var(--stop-soft);color:var(--stop)">◉</div><div><div class="lt">Nyeri Terminal</div><div class="ld">Drop point</div></div></div>
+        </div></div>
+    </div>
+    <button class="btn ghost sm" onclick="stepBus()" style="margin-top:4px">Refresh location</button>`,
+  alerts:()=>head('Notifications','Arrival, departure and pickup alerts.')+`
+    <div class="panel"><div class="panel-b">
+      ${[['Boarding confirmed','Alex boarded Bus 12A','07:15','ok'],
+         ['Trip started','West Route is now active','07:16','info'],
+         ['Approaching drop point','Bus 12A is 1.2 km away','07:40','warn'],
+         ['Pickup PIN sent','Enter code to release Alex','07:45','info']]
+        .map(([t,d,tm,c])=>`<div class="lrow"><div class="lm">◔</div><div><div class="lt">${t}</div><div class="ld">${d}</div></div><div class="la"><span class="tag ${c}">${tm}</span></div></div>`).join('')}
+    </div></div>`,
+ },
+
+ student:{
+  overview:()=>head('Welcome back, Alex','Your bus allocation and boarding status for today.')+`
+    <div class="notice ok"><span class="ni">✓</span><div>You are checked in for <b>Bus 12A</b> on the West Route. Have a safe trip.</div></div>
+    <div class="two">
+      <div class="panel"><div class="panel-h"><h3>Today's allocation</h3><div class="sp"></div><span class="tag ok"><span class="dot-i ok"></span>On route</span></div>
+        <div class="panel-b">
+          <div class="field-row"><span class="k">Bus</span><span class="v">12A</span></div>
+          <div class="field-row"><span class="k">Route</span><span class="v">West Route</span></div>
+          <div class="field-row"><span class="k">Pick-up point</span><span class="v">Greenview Stop</span></div>
+          <div class="field-row"><span class="k">Departure</span><span class="v">07:15 AM</span></div>
+          <div class="field-row"><span class="k">Drop point</span><span class="v">Nyeri Town Terminal</span></div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn ok sm" onclick="toast('Boarding confirmed')">Confirm boarding</button>
+            <button class="btn ghost sm" onclick="go('tracking')">Track bus</button>
+          </div>
+        </div></div>
+      <div class="panel"><div class="panel-h"><h3>Your details</h3></div>
+        <div class="panel-b">
+          <div class="field-row"><span class="k">Student ID</span><span class="v">STU12345</span></div>
+          <div class="field-row"><span class="k">School</span><span class="v">Greenview High</span></div>
+          <div class="field-row"><span class="k">Guardian</span><span class="v">Mary Njoroge</span></div>
+          <div class="field-row"><span class="k">Status</span><span class="v"><span class="tag ok">Verified</span></span></div>
+        </div></div>
+    </div>`,
+ },
+
+ guardian:{
+  overview:()=>head('Welcome, Mary','Your student and quick actions.')+`
+    <div class="kpis" style="grid-template-columns:1fr 1fr 1fr">
+      ${kpi('Student status','Safe','On Bus 12A','up')}
+      ${kpi('Current location','On route','1.2 km to drop','flat')}
+      ${kpi('Est. arrival','07:18','West Route','flat')}
+    </div>
+    <div class="two">
+      <div class="panel"><div class="panel-h"><h3>Your student</h3></div>
+        <div class="panel-b">
+          <div class="lrow"><div class="lm">A</div><div><div class="lt">Alex Mwangi</div><div class="ld">STU12345 · Greenview High</div></div><div class="la"><span class="tag ok">Safe</span></div></div>
+          <div class="field-row"><span class="k">Bus</span><span class="v">12A — West Route</span></div>
+          <div class="field-row"><span class="k">Driver</span><span class="v">John Otieno</span></div>
+        </div></div>
+      <div class="panel"><div class="panel-h"><h3>Quick actions</h3></div>
+        <div class="panel-b flush">
+          <div style="padding:6px 20px">
+          <div class="lrow" style="cursor:pointer" onclick="go('tracking')"><div class="lm">◎</div><div><div class="lt">Live tracking</div><div class="ld">See the bus on the map</div></div><div class="la">›</div></div>
+          <div class="lrow" style="cursor:pointer" onclick="go('pickup')"><div class="lm">⚿</div><div><div class="lt">Authorise pickup</div><div class="ld">Confirm release with a PIN</div></div><div class="la">›</div></div>
+          <div class="lrow" style="cursor:pointer" onclick="go('alerts')"><div class="lm">◔</div><div><div class="lt">Notifications</div><div class="ld">Arrival & departure alerts</div></div><div class="la">›</div></div>
+          </div>
+        </div></div>
+    </div>`,
+  pickup:()=>head('Authorise pickup','Verify a one-time PIN to release your student at the destination.')+`
+    <div style="max-width:520px">
+    <div class="notice info"><span class="ni">i</span><div>A one-time PIN has been sent to your phone by SMS. Enter it below to confirm you are collecting <b>Alex</b>.</div></div>
+    <div class="panel"><div class="panel-b">
+      <label>One-time PIN</label>
+      <div class="otp-row" id="otp"><div class="oc">•</div><div class="oc">•</div><div class="oc">•</div><div class="oc">•</div></div>
+      <button class="btn ok" onclick="verifyOtp()">Verify & authorise release</button>
+      <div class="mini-note">In the live system the PIN arrives via Africa's Talking SMS. Demo code auto-fills.</div>
+      <div id="otp-ok"></div>
+    </div></div></div>`,
+ },
+
+ driver:{
+  overview:()=>head('Welcome, John','Bus 12A — West Route.')+`
+    <div class="notice info" id="trip-banner"><span class="ni">i</span><div>Trip not started. Verify your route assignment, then start the trip.</div></div>
+    <div class="two">
+      <div class="panel"><div class="panel-h"><h3>Today's trip</h3></div>
+        <div class="panel-b">
+          <div class="field-row"><span class="k">Route</span><span class="v">West Route</span></div>
+          <div class="field-row"><span class="k">Path</span><span class="v">Greenview → Nyeri Terminal</span></div>
+          <div class="field-row"><span class="k">Manifest</span><span class="v">38 students</span></div>
+          <div class="field-row"><span class="k">Bus</span><span class="v">12A</span></div>
+          <div style="display:flex;gap:10px;margin-top:16px">
+            <button class="btn ok sm" id="tripbtn" onclick="toggleTrip()">Start trip</button>
+            <button class="btn stop sm" onclick="toast('Incident reported to school admin')">Report incident</button>
+          </div>
+        </div></div>
+      <div class="panel"><div class="panel-h"><h3>Assignment check</h3></div>
+        <div class="panel-b">
+          <div class="lrow"><div class="lm" style="background:var(--ok-soft);color:var(--ok)">✓</div><div><div class="lt">Driver verified</div><div class="ld">DRV001 authenticated</div></div></div>
+          <div class="lrow"><div class="lm" style="background:var(--ok-soft);color:var(--ok)">✓</div><div><div class="lt">Route assigned</div><div class="ld">West Route confirmed</div></div></div>
+          <div class="lrow"><div class="lm" style="background:var(--ok-soft);color:var(--ok)">✓</div><div><div class="lt">Manifest loaded</div><div class="ld">38 students</div></div></div>
+        </div></div>
+    </div>`,
+  manifest:()=>head('Trip manifest','Students assigned to Bus 12A today.')+`
+    <div class="panel"><div class="panel-b flush"><table>
+      <thead><tr><th>Student</th><th>ID</th><th>Pick-up</th><th>Status</th></tr></thead>
+      <tbody>
+        ${[['Alex Mwangi','STU12345','Greenview','ok','Boarded'],
+           ['Brian Kip','STU12346','Greenview','ok','Boarded'],
+           ['Cynthia W.','STU12347','Oak Street','warn','Pending'],
+           ['Daniel O.','STU12348','Oak Street','warn','Pending'],
+           ['Emma L.','STU12349','Riverside','warn','Pending']]
+          .map(([n,id,p,c,s])=>`<tr><td>${n}</td><td>${id}</td><td>${p}</td><td><span class="tag ${c}">${s}</span></td></tr>`).join('')}
+      </tbody></table></div></div>`,
+ },
+
+ admin:{
+  overview:()=>head('School overview','Greenview High — transport at a glance.')+`
+    <div class="kpis">
+      ${kpi('Students','120','All registered','flat')}
+      ${kpi('Active buses','15','3 routes running','up')}
+      ${kpi('On-time rate','96%','+2% this week','up')}
+      ${kpi('Open incidents','3','2 resolving','dn')}
+    </div>
+    <div class="two">
+      <div class="panel"><div class="panel-h"><h3>Active trips</h3><div class="sp"></div><span class="tag info">Live</span></div>
+        <div class="panel-b flush"><table>
+          <thead><tr><th>Bus</th><th>Route</th><th>Students</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>12A</td><td>West Route</td><td>38</td><td><span class="tag ok">On route</span></td></tr>
+            <tr><td>07B</td><td>East Route</td><td>41</td><td><span class="tag ok">On route</span></td></tr>
+            <tr><td>21C</td><td>North Route</td><td>29</td><td><span class="tag warn">Delayed</span></td></tr>
+            <tr><td>15D</td><td>South Route</td><td>33</td><td><span class="tag ok">Arrived</span></td></tr>
+          </tbody></table></div></div>
+      <div class="panel"><div class="panel-h"><h3>Quick actions</h3></div>
+        <div class="panel-b flush"><div style="padding:6px 20px">
+          <div class="lrow" style="cursor:pointer" onclick="go('students')"><div class="lm">＋</div><div><div class="lt">Register student</div><div class="ld">Add a new record</div></div><div class="la">›</div></div>
+          <div class="lrow" style="cursor:pointer" onclick="go('routes')"><div class="lm">⛗</div><div><div class="lt">Assign route</div><div class="ld">Allocate buses & students</div></div><div class="la">›</div></div>
+          <div class="lrow" style="cursor:pointer" onclick="go('reports')"><div class="lm">▧</div><div><div class="lt">Generate report</div><div class="ld">Trips & attendance</div></div><div class="la">›</div></div>
+        </div></div></div>
+    </div>`,
+  students:()=>head('Students','Registered students and their allocations.')+`
+    <div class="panel"><div class="panel-h"><h3>All students</h3><div class="sp"></div><button class="btn sm" onclick="showRegister()">Register student</button></div>
+      <div class="panel-b flush" id="stu-table"><table>
+        <thead><tr><th>Name</th><th>ID</th><th>Guardian</th><th>Route</th><th>Status</th></tr></thead>
+        <tbody>
+          ${[['Alex Mwangi','STU12345','Mary Njoroge','West','ok','Verified'],
+             ['Brian Kip','STU12346','Paul Kip','West','ok','Verified'],
+             ['Cynthia W.','STU12347','Jane W.','East','ok','Verified'],
+             ['Daniel O.','STU12348','Grace O.','North','warn','Pending'],
+             ['Emma L.','STU12349','Peter L.','South','ok','Verified']]
+            .map(([n,id,g,r,c,s])=>`<tr><td>${n}</td><td>${id}</td><td>${g}</td><td>${r}</td><td><span class="tag ${c}">${s}</span></td></tr>`).join('')}
+        </tbody></table></div></div>`,
+  routes:()=>head('Routes & buses','Route assignments across the school.')+`
+    <div class="panel"><div class="panel-b flush"><table>
+      <thead><tr><th>Route</th><th>Bus</th><th>Driver</th><th>Drop point</th><th>Students</th></tr></thead>
+      <tbody>
+        <tr><td>West Route</td><td>12A</td><td>John Otieno</td><td>Nyeri Terminal</td><td>38</td></tr>
+        <tr><td>East Route</td><td>07B</td><td>Sarah Mumbi</td><td>Embu Stage</td><td>41</td></tr>
+        <tr><td>North Route</td><td>21C</td><td>David Kariuki</td><td>Nanyuki Town</td><td>29</td></tr>
+        <tr><td>South Route</td><td>15D</td><td>Grace Wanjala</td><td>Thika Bus Park</td><td>33</td></tr>
+      </tbody></table></div></div>`,
+  reports:()=>head('Reports','Generate and download transport reports.')+`
+    <div class="split">
+      <div class="panel"><div class="panel-h"><h3>Generate report</h3></div><div class="panel-b">
+        <div class="fg"><label>Report type</label><select><option>Daily trips</option><option>Attendance</option><option>Incidents</option><option>Route performance</option></select></div>
+        <div class="fg"><label>Date range</label><input type="text" value="01 Jul – 07 Jul 2026"></div>
+        <button class="btn" onclick="toast('Report generated')">Generate report</button>
+      </div></div>
+      <div class="panel"><div class="panel-h"><h3>Recent reports</h3></div><div class="panel-b">
+        <div class="lrow"><div class="lm">▧</div><div><div class="lt">Daily trips — 06 Jul</div><div class="ld">Generated 07:00</div></div><div class="la"><button class="btn ghost sm">Download</button></div></div>
+        <div class="lrow"><div class="lm">▧</div><div><div class="lt">Weekly attendance</div><div class="ld">Week 26</div></div><div class="la"><button class="btn ghost sm">Download</button></div></div>
+      </div></div>
+    </div>`,
+ },
+
+ sysadmin:{
+  overview:()=>head('National overview','Every registered school, bus and route across the network.')+`
+    <div class="kpis">
+      ${kpi('Registered schools','240','+6 this month','up')}
+      ${kpi('Buses in service','1,850','92% active now','up')}
+      ${kpi('Students','62,400','Across 47 counties','flat')}
+      ${kpi('Active trips','318','Live right now','flat')}
+    </div>
+    <div class="two">
+      <div class="panel"><div class="panel-h"><h3>Schools by region</h3><div class="sp"></div><span class="tag info">Live</span></div>
+        <div class="panel-b flush"><table>
+          <thead><tr><th>Region</th><th>Schools</th><th>Buses</th><th>Active trips</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Nairobi</td><td>58</td><td>430</td><td>96</td><td><span class="tag ok">Normal</span></td></tr>
+            <tr><td>Central</td><td>44</td><td>360</td><td>71</td><td><span class="tag ok">Normal</span></td></tr>
+            <tr><td>Rift Valley</td><td>52</td><td>410</td><td>68</td><td><span class="tag warn">2 delays</span></td></tr>
+            <tr><td>Coast</td><td>31</td><td>240</td><td>44</td><td><span class="tag ok">Normal</span></td></tr>
+            <tr><td>Western</td><td>55</td><td>410</td><td>39</td><td><span class="tag ok">Normal</span></td></tr>
+          </tbody></table></div></div>
+      <div class="panel"><div class="panel-h"><h3>Network health</h3></div><div class="panel-b">
+        <div class="field-row"><span class="k">On-time rate (today)</span><span class="v">94.2%</span></div>
+        <div class="field-row"><span class="k">Incidents (open)</span><span class="v">11</span></div>
+        <div class="field-row"><span class="k">Verification success</span><span class="v">99.1%</span></div>
+        <div class="field-row"><span class="k">SMS delivered</span><span class="v">48,210</span></div>
+        <div class="field-row"><span class="k">Avg. GPS latency</span><span class="v">3.2 s</span></div>
+      </div></div>
+    </div>`,
+  schools:()=>head('Schools','All registered schools on the platform.')+`
+    <div class="panel"><div class="panel-h"><h3>Registered schools</h3><div class="sp"></div><button class="btn sm" onclick="toast('School onboarding started')">Add school</button></div>
+      <div class="panel-b flush"><table>
+        <thead><tr><th>School</th><th>County</th><th>Students</th><th>Buses</th><th>Status</th></tr></thead>
+        <tbody>
+          ${[['Greenview High','Nyeri','120','15','ok','Active'],
+             ['St. Mary&rsquo;s Academy','Nairobi','340','22','ok','Active'],
+             ['Rift Academy','Nakuru','210','18','ok','Active'],
+             ['Coast High','Mombasa','180','14','warn','Onboarding'],
+             ['Western Boys','Kakamega','260','20','ok','Active']]
+            .map(([n,co,st,bu,c,s])=>`<tr><td>${n}</td><td>${co}</td><td>${st}</td><td>${bu}</td><td><span class="tag ${c}">${s}</span></td></tr>`).join('')}
+      </tbody></table></div></div>`,
+  fleet:()=>head('Fleet','Buses and drivers across the network.')+`
+    <div class="kpis"><div class="kpi"><div class="kl">Total buses</div><div class="kn">1,850</div><div class="kt flat">Registered</div></div>
+      <div class="kpi"><div class="kl">Active now</div><div class="kn">1,702</div><div class="kt up">92%</div></div>
+      <div class="kpi"><div class="kl">Drivers</div><div class="kn">1,910</div><div class="kt flat">Verified</div></div>
+      <div class="kpi"><div class="kl">Maintenance</div><div class="kn">148</div><div class="kt dn">Off-road</div></div></div>
+    <div class="panel"><div class="panel-b flush"><table>
+      <thead><tr><th>Bus</th><th>School</th><th>Driver</th><th>Region</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>12A</td><td>Greenview High</td><td>John Otieno</td><td>Central</td><td><span class="tag ok">On route</span></td></tr>
+        <tr><td>07B</td><td>Greenview High</td><td>Sarah Mumbi</td><td>Central</td><td><span class="tag ok">On route</span></td></tr>
+        <tr><td>44X</td><td>St. Mary&rsquo;s</td><td>Ali Hassan</td><td>Nairobi</td><td><span class="tag ok">On route</span></td></tr>
+        <tr><td>19Z</td><td>Rift Academy</td><td>Mary Chebet</td><td>Rift Valley</td><td><span class="tag warn">Delayed</span></td></tr>
+        <tr><td>02M</td><td>Coast High</td><td>—</td><td>Coast</td><td><span class="tag stop">Maintenance</span></td></tr>
+      </tbody></table></div></div>`,
+  reports:()=>head('National reports','Aggregate reports across all schools.')+`
+    <div class="split">
+      <div class="panel"><div class="panel-h"><h3>Generate report</h3></div><div class="panel-b">
+        <div class="fg"><label>Scope</label><select><option>All schools</option><option>By region</option><option>By county</option></select></div>
+        <div class="fg"><label>Report type</label><select><option>Network performance</option><option>Incident summary</option><option>Utilisation</option></select></div>
+        <div class="fg"><label>Period</label><input value="June 2026"></div>
+        <button class="btn" onclick="toast('National report generated')">Generate</button>
+      </div></div>
+      <div class="panel"><div class="panel-h"><h3>Recent</h3></div><div class="panel-b">
+        <div class="lrow"><div class="lm">▧</div><div><div class="lt">Network performance — May</div><div class="ld">240 schools</div></div><div class="la"><button class="btn ghost sm">Download</button></div></div>
+        <div class="lrow"><div class="lm">▧</div><div><div class="lt">Incident summary — Q2</div><div class="ld">All regions</div></div><div class="la"><button class="btn ghost sm">Download</button></div></div>
+      </div></div>
+    </div>`,
+ },
+};
+
+/* ============ INTERACTIONS ============ */
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1900);}
+
+function showRegister(){
+  document.getElementById('stu-table').innerHTML=`<div class="panel-b">
+    <div class="form-grid">
+      <div><label>Full name</label><input placeholder="Student name"></div>
+      <div><label>Student ID</label><input placeholder="Auto · STU-----"></div>
+      <div><label>Guardian name</label><input placeholder="Guardian name"></div>
+      <div><label>Guardian ID</label><input placeholder="GUA-----"></div>
+      <div class="full"><label>Route</label><select><option>West Route</option><option>East Route</option><option>North Route</option><option>South Route</option></select></div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px"><button class="btn" onclick="toast('Student registered');go('students')">Register student</button><button class="btn ghost" onclick="go('students')">Cancel</button></div>
+    <div class="mini-note">Duplicate records are blocked by unique student IDs and validation checks.</div>
+  </div>`;
+}
+
+let otpDone=false;
+function verifyOtp(){
+  const code=['4','8','2','6'], cells=document.querySelectorAll('#otp .oc');
+  cells.forEach((c,i)=>setTimeout(()=>{c.textContent=code[i];c.classList.add('on');},i*140));
+  setTimeout(()=>{document.getElementById('otp-ok').innerHTML='<div class="notice ok" style="margin-top:16px"><span class="ni">✓</span><div>Pickup authorised — Alex released to Mary. A confirmation has been logged.</div></div>';toast('Pickup authorised');},760);
+}
+
+let tripOn=false;
+function toggleTrip(){
+  tripOn=!tripOn;
+  const b=document.getElementById('tripbtn'),bn=document.getElementById('trip-banner');
+  if(tripOn){b.textContent='End trip';b.className='btn stop sm';bn.className='notice ok';bn.innerHTML='<span class="ni">✓</span><div>Trip active — West Route. The school has been notified.</div>';toast('Trip started');}
+  else{b.textContent='Start trip';b.className='btn ok sm';bn.className='notice info';bn.innerHTML='<span class="ni">i</span><div>Trip ended. Records saved.</div>';toast('Trip ended');}
+}
+
+/* map */
+let busStep=0;
+const PATH=[
+  {x:'12%',y:'72%',next:'Oak Street',dist:'1.2 km',eta:'07:18 AM'},
+  {x:'38%',y:'72%',next:'Market Junction',dist:'0.9 km',eta:'07:22 AM'},
+  {x:'38%',y:'40%',next:'Riverside',dist:'0.5 km',eta:'07:26 AM'},
+  {x:'68%',y:'40%',next:'Nyeri Terminal',dist:'0.2 km',eta:'07:30 AM'},
+  {x:'86%',y:'22%',next:'Arrived',dist:'At drop point',eta:'Arrived'},
+];
+function initMap(){
+  const m=document.getElementById('mapview'); if(!m)return; busStep=0;
+  m.innerHTML=`
+    <div class="rd" style="left:0;top:72%;width:100%;height:7px"></div>
+    <div class="rd" style="left:38%;top:0;width:7px;height:72%"></div>
+    <div class="rd" style="left:38%;top:40%;width:48%;height:7px"></div>
+    <div class="rd" style="left:68%;top:22%;width:7px;height:20%"></div>
+    <div class="rd faint" style="left:0;top:40%;width:38%;height:6px"></div>
+    <div class="rd faint" style="left:12%;top:40%;width:6px;height:32%"></div>
+    <div class="stopmark done" style="left:12%;top:72%"></div>
+    <div class="stopmark" style="left:38%;top:72%"></div>
+    <div class="stopmark" style="left:38%;top:40%"></div>
+    <div class="stopmark dest" style="left:86%;top:22%"></div>
+    <div class="busm" id="busm" style="left:12%;top:72%"><div class="b-lbl">Bus 12A</div><div class="b-ic">▮</div></div>
+    <div class="maplegend"><div class="lr"><span class="dot-i ok"></span>Departed stop</div><div class="lr"><span class="dot-i" style="background:var(--slate)"></span>Upcoming stop</div><div class="lr"><span class="dot-i stop"></span>Drop point</div></div>`;
+}
+function stepBus(){
+  busStep=(busStep+1)%PATH.length; const p=PATH[busStep];
+  const b=document.getElementById('busm'); if(!b)return;
+  b.style.left=p.x; b.style.top=p.y;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('m-next',p.next); set('m-dist',p.dist); set('m-eta',p.eta);
+  toast(p.next==='Arrived'?'Bus arrived at drop point':'Location updated');
+}
+</script>
+</body>
+</html>
