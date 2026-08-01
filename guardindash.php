@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== "student") {
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== "guardian") {
     header("Location: login.html");
     exit();
 }
@@ -9,9 +9,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== "student") {
 include("db_connection.php");
 
 $userID = $_SESSION['userID'];
-$sql = "SELECT guardian.*, guardian.guardian_name 
+$sql = "SELECT guardian.*, student.student_name 
         FROM guardian 
-        join student ON guardian.studentID = student.studentID 
+        join student ON student.guardian_id = guardian.guardian_id 
         WHERE  guardian.userID = ?";
         
 $stmt = mysqli_prepare($conn, $sql);
@@ -37,7 +37,11 @@ $guardian = mysqli_fetch_assoc($result);
 <body>
     <h1>Guardian Dashboard</h1>
     
-     <p id="Sdetail">Name: Jane Doe<br> ID: 12345 <br>student: John Doe</p>
+     <p id="Sdetail">
+        Name: <?php echo $guardian['guardian_name']; ?><br>
+        ID: <?php echo $guardian['guardian_id']; ?><br>
+        Student: <?php echo $guardian['student_name']; ?>
+    </p>
 
      <a href="notification.html"><button type="button">Check notifications</button></a>
       <button type="button">Authorize pickup</button> 
