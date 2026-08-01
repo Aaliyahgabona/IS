@@ -27,8 +27,8 @@ $admin = mysqli_fetch_assoc($result);
         <p id="Sdetail"> ID: <?php echo $admin['userID']; ?> <br>Total school registrations: <?php echo $admin['total school registrations']; ?></p>
 
     
-        <a href="schoolregister.html"><button type="button">Register school</button></a> 
-        <a href="driverregister.html"><button type="button">Register driver</button></a>
+        <a href="schoolregister.php"><button type="button">Register school</button></a> 
+        <a href="driverregister.php"><button type="button">Register driver</button></a>
        
 </body>
 </html>

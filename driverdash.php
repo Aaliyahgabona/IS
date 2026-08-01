@@ -11,7 +11,7 @@ include("db_connection.php");
 $userID = $_SESSION['userID'];
 $sql = "SELECT driver.*, bus.bus_details 
         FROM driver
-        JOIN bus ON bus.driver_id = driver.driver_id 
+         LEFT JOIN bus ON bus.driver_id = driver.driver_id 
         WHERE driver.userID = ?";
         
 $stmt = mysqli_prepare($conn, $sql);
@@ -33,8 +33,11 @@ $driver = mysqli_fetch_assoc($result);
 <body>
     <h1>Driver Dashboard</h1>
     
-     <p id="Sdetail">Name: <?php echo $driver['driver_name']; ?><br> ID: <?php echo $driver['driver_id']; ?> <br> Bus details: <?php echo $driver['bus_details']; ?></p>
-
+    <p id="Sdetail">
+    Name: <?php echo $driver['driver_name']; ?><br>
+    ID: <?php echo $driver['driver_id']; ?><br>
+    Bus details: <?php echo $driver['bus_details'] ?? 'No bus assigned yet'; ?>
+</p>
      <button type="button">Start trip</button> 
       <button type="button">End trip</button> 
       <button type="button">report incident</button>
