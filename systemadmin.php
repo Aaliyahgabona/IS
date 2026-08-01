@@ -1,6 +1,11 @@
 
 <?php
 session_start();
+
+if (!isset($_SESSION['userID']) || $_SESSION['role'] !== 'system_admin') {
+    header("Location: login.html");
+    exit();
+}
 include("db_connection.php");
 
 
@@ -19,7 +24,7 @@ $admin = mysqli_fetch_assoc($result);
 <body>
     <h1>System Admin Dashboard</h1>
     <p>Welcome to your dashboard!</p>
-        <p id="Sdetail"> ID: <?php echo $admin['userID']; ?> <br>Total school registrations: <?php echo $admin['total_school_registrations']; ?></p>
+        <p id="Sdetail"> ID: <?php echo $admin['userID']; ?> <br>Total school registrations: <?php echo $admin['total school registrations']; ?></p>
 
     
         <a href="schoolregister.html"><button type="button">Register school</button></a> 
