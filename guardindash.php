@@ -43,8 +43,8 @@ $guardian = mysqli_fetch_assoc($result);
         Student: <?php echo $guardian['student_name']; ?>
     </p>
 
-     <a href="notification.html"><button type="button">Check notifications</button></a>
+      <a href="notification.html"><button type="button">Check notifications</button></a>
       <button type="button">Authorize pickup</button> 
-      <a href="tracking.html"><button type="button">view tracking</button></a>
+      <a href="tracking.php"><button type="button">view tracking</button></a>
 </body>
 </html>
