@@ -34,7 +34,7 @@ $schoolAdmin = mysqli_fetch_assoc($result);
     </p>
      
 
-     <a href="updateroute.html"><button type="button">Update route</button></a>
+    
 
      <a href="studentregister.php"><button type="button">add student</button></a> 
 

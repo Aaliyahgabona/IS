@@ -9,9 +9,10 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== "student") {
 include("db_connection.php");
 
 $userID = $_SESSION['userID'];
-$sql = "SELECT student.*, guardian.guardian_name 
+$sql = "SELECT student.*, guardian.guardian_name , bus.bus_details
         FROM student 
-        JOIN guardian ON student.guardian_id = guardian.guardian_id 
+          JOIN guardian ON student.guardian_id = guardian.guardian_id 
+        LEFT JOIN bus ON student.route_id = bus.route_id
         WHERE student.userID = ?";
         
 $stmt = mysqli_prepare($conn, $sql);
@@ -39,7 +40,8 @@ $student = mysqli_fetch_assoc($result);
     <p id="Sdetail">
         Name: <?php echo $student['student_name']; ?><br>
         ID: <?php echo $student['student_id']; ?><br>
-        Guardian: <?php echo $student['guardian_name']; ?>
+        Guardian: <?php echo $student['guardian_name']; ?><br>
+        Bus details: <?php echo $student['bus_details'] ?? 'No bus assigned yet'; ?>
     </p>
 
      

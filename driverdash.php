@@ -9,9 +9,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== "driver") {
 include("db_connection.php");
 
 $userID = $_SESSION['userID'];
-$sql = "SELECT driver.*, bus.bus_details 
+$sql = "SELECT driver.*, driver.bus_details 
         FROM driver
-         LEFT JOIN bus ON bus.driver_id = driver.driver_id 
+        
         WHERE driver.userID = ?";
         
 $stmt = mysqli_prepare($conn, $sql);
